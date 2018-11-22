@@ -1,3 +1,4 @@
+// This class contains all info necessary for auction items
 class Item
 {
 	private int startingPrice;

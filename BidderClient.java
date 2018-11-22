@@ -9,6 +9,8 @@ public class BidderClient implements Runnable
    private DataOutputStream streamOut = null;
    private BidderClientThread client = null;
    private String clientName;
+   private boolean isNewItemName = false;
+   private boolean isNewItemValue = false;
 
    
 	public BidderClient(String serverName, int serverPort, String name)
@@ -17,7 +19,7 @@ public class BidderClient implements Runnable
 
 		this.clientName = name;
 		try {
-			// Step 1: Establish server connection
+			// Establish server connection and provide client with welcome message
 			socket = new Socket(serverName, serverPort);
 			System.out.println("Welcome to the Auction!");
 			System.out.println("To bid enter a numeric value greater than the current bid.");
@@ -36,22 +38,51 @@ public class BidderClient implements Runnable
 	public void run()
 	{
 		while (thread != null) {
+			// Send data to server
 			try {
-				// Step 3: Send data
-				String bid = console.readLine();
-				try {
-					if (!bid.equals("NEW")) {
-						Integer.parseInt(bid);
+				// If regular bid is to be entered
+				String input = console.readLine();
+				if (!isNewItemName & !isNewItemValue) {
+					try {
+						if (!input.equals("NEW")) {
+							Integer.parseInt(input);
+						}
+						streamOut.writeUTF(input + " " + clientName);
+						streamOut.flush();
 					}
-					streamOut.writeUTF(bid + " " + clientName);
-					streamOut.flush();
+					catch (NumberFormatException nfe) {
+						if (input.equals("QUIT")) {
+							stop();
+						}
+						else {
+							System.out.println("Must enter a number");
+						}
+					}
 				}
-				catch (NumberFormatException nfe) {
-					if (bid.equals("QUIT")) {
+				// If client is entering value of new item name
+				else if (isNewItemName && !isNewItemValue) {
+					if (input.equals("QUIT")) {
 						stop();
 					}
-					else {
-						System.out.println("Must enter a number");
+					// Attach unique string to inform server that a new item name is being sent
+					streamOut.writeUTF(input + " ***Name***");
+					streamOut.flush();
+				}
+				// If client is entering value of new item value
+				else if (!isNewItemName && isNewItemValue) {
+					try {
+						Integer.parseInt(input);
+						// Attach unique string to inform server that a new item value is being sent
+						streamOut.writeUTF(input + " ***Value***");
+						streamOut.flush();
+					}
+					catch (NumberFormatException nfe) {
+						if (input.equals("QUIT")) {
+							stop();
+						}
+						else {
+							System.out.println("Must enter a number");
+						}
 					}
 				}
 			}
@@ -62,15 +93,32 @@ public class BidderClient implements Runnable
 		}
 	}
 
-	public void display(String info) {
-		System.out.print(info);
+	/*
+	This method displays messages sent to client from the server.
+	If server requires name or value of new item, update flags to 
+	ensure correct unique string is attached.
+	*/
+	public void display(String message) {
+		if (message.equals("\nEnter Name of new item:\t")) {
+			isNewItemName = true;
+			isNewItemValue = false;
+		}
+		else if (message.equals("\nEnter Value of new item:\t")) {
+			isNewItemName = false;
+			isNewItemValue = true;
+		}
+		else {
+			isNewItemName = false;
+			isNewItemValue = false;
+		}
+		System.out.print(message);
 	}
 	
 	public void start() throws IOException
 	{
 		console = new BufferedReader(new InputStreamReader(System.in));
 
-		// Step 2: set up output stream
+		// Set up output stream
 		streamOut = new DataOutputStream(socket.getOutputStream());
 		if (thread == null) {
 			// creating client thread
@@ -96,7 +144,7 @@ public class BidderClient implements Runnable
 		catch(IOException ioe) {
 			System.out.println("Error closing ...");
 		}
-		// Step 4: Close the Connection
+		// Close the Connection
 		client.close();
 		thread = null;
 	}

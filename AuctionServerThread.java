@@ -20,10 +20,10 @@ public class AuctionServerThread extends Thread
 
    }
    
+   // This method sends data to client or clients
 	public void send(String msg)
 	{
 		try {
-			// Step 4: Send data
 			streamOut.writeUTF(msg);
 			streamOut.flush();
         }
@@ -34,9 +34,10 @@ public class AuctionServerThread extends Thread
 		}
 	}
 	
-   public int getID(){
-	   return ID;
-   }
+	// This method returns the port number of a socket connected to current client
+	public int getID() {
+		return ID;
+	}
 
 	public void run()
 	{
@@ -57,9 +58,9 @@ public class AuctionServerThread extends Thread
 		thread = new Thread(this);
 		while (true) {
 			try {
-				// Step 4: Receive data
-				server.getBid(ID, streamIn.readUTF());
-
+				// Receive data and pass it to server to handle
+				server.getInput(ID, streamIn.readUTF());
+				
 				int pause = (int)(Math.random()*3000);
 				Thread.sleep(pause);
 			}
@@ -75,7 +76,7 @@ public class AuctionServerThread extends Thread
 
 	public void open() throws IOException
 	{
-		// Step 3: Set up input and output streams 
+		// Set up input and output streams 
 		streamIn = new DataInputStream(new BufferedInputStream(socket.getInputStream()));
 		streamOut = new DataOutputStream(new BufferedOutputStream(socket.getOutputStream()));
 	}

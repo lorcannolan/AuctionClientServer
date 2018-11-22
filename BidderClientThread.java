@@ -19,7 +19,7 @@ public class BidderClientThread extends Thread
 	public void open()
 	{  
 		try {
-			// Step 2: set up input stream
+			// Set up input stream
 			streamIn = new DataInputStream(socket.getInputStream());
 		}
 		catch(IOException ioe) {
@@ -30,7 +30,7 @@ public class BidderClientThread extends Thread
 	
 	public void close() {
 		try {
-			// Step 4: Close the connection to the socket
+			// Close the connection to the socket
 			if (streamIn != null) streamIn.close();
 		}
 		catch(IOException ioe) {
@@ -42,9 +42,8 @@ public class BidderClientThread extends Thread
 	{
 		while(true && client!= null) {
 			try {
-				// Step 3: receive data
-				String message = streamIn.readUTF();
-				client.display(message);
+				// Receive data from server
+				client.display(streamIn.readUTF());
 			}
 			catch(IOException ioe) {
 				client = null;
